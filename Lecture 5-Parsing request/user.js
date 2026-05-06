@@ -1,12 +1,11 @@
 // SIngly threaded
-const http = require("http");
 const fs = require('fs');
 
-const server = http.createServer(function (req, res) {
+const userRequestHandler = (req, res)=>{
   //1- request,response
   //2-createServer is a function
   //3- server me callback milti hai
-  console.log(req.url, req.method, req.headers);
+  console.log(req.url, req.method);
   if (req.url === "/") {
     res.setHeader("Content-Type", "text/html");
     res.write("<html>");
@@ -34,8 +33,26 @@ const server = http.createServer(function (req, res) {
     return res.end();;
   }
 else if(req.url.toLowerCase()==="/submit-details" && req.method  =="POST"){
-  
-fs.writeFileSync('user.txt','Prashant jain');
+  const body =[];
+   req.on('data',chunk=>{//on means listen
+    console.log(chunk);
+    body.push(chunk);
+   })
+   req.on('end',()=>{
+    const parseBody = Buffer.concat(body).toString();
+
+    console.log(parseBody);
+    const params = new URLSearchParams(parseBody);//decoded the parseBody
+   const bodyObject =Object.fromEntries(params);
+  //  for(const [key,value] of params.entries()){
+  //   bodyObject[key]= value;
+  //  }
+
+   console.log(bodyObject);
+   fs.writeFileSync('user.txt',JSON.stringify(bodyObject));
+   });
+   
+
 res.statusCode =302;
 res.setHeader('Location','/');
 return res.end()
@@ -46,8 +63,6 @@ return res.end()
   res.write("<body><h1>hello my name is Lavkush</h1></body>");
   res.write("</html>");
   return res.end();
-});
-const port = 3001;
-server.listen(port, () => {
-  console.log(`server is ${port}`);
-});
+};
+module.exports = userRequestHandler;
+
